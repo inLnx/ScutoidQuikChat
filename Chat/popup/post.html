@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <script>
+        function autoRefresh() {
+            window.location = window.location.href;
+        }
+        setInterval('autoRefresh()', 60000);
+    </script>
+    <style type="text/css">
+    body {
+      min-width: 500px; /* your desired width */
+      max-width: 100%;
+      position: relative;
+      vertical-align:middle;
+    }
+    </style>
+    
+    <style>
+        h1,h2,h3,h4,h5,h6,p{
+            font-family: Google Sans, verdana, Roboto, Arial; 
+/*Google Sans only works on chromeOS*/
+
+        }
+        </style>
+    <script src="https://npmcdn.com/parse/dist/parse.min.js"></script>
+    <script src="notification_script.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="text/javascript" src="https://npmcdn.com/parse/dist/parse.min.js"></script>
+    <title>ScutoidChat</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@fluentui/web-components@2.6.1/dist/web-components.min.js"></script>
+   <style>
+        /* Styling for Post Cards */
+        /* Add a black background color to the top navigation */
+.topnav {
+  background-color: #333;
+  overflow: hidden;
+}
+
+/* Style the links inside the navigation bar */
+.topnav a {
+  float: left;
+  color: #f2f2f2;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  font-size: 17px;
+}
+
+/* Change the color of links on hover */
+.topnav a:hover {
+  background-color: #ddd;
+  color: black;
+}
+
+/* Add a color to the active/current link */
+.topnav a.active {
+  background-color: #0a1441;
+  color: white;
+}
+        .post-card {
+            background-color: #807fc2;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+        }
+
+        .post-content {
+            margin: 10px 0;
+            font-size: 16px;
+        }
+
+        .post-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+
+        button:hover {
+            background-color: #0b2244;
+            border: radius 32px;
+        }
+        
+        /* Styling for form */
+        #postForm {
+            margin-bottom: 30px;
+        }
+
+        #postForm input[type="text"], #postForm input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        h2 {
+            font-family: Arial, sans-serif;
+        }
+    </style>
+    <script type="text/javascript">
+        
+        // Initialize Parse
+        Parse.initialize("kpUR8HiFeTWpUy3Ye7Ugxi1a01YrBQPbapuGhlOb", "4uBUbbALeC8kmBwNYcMNREyzYutauKIxbNPNz0G3");
+        Parse.serverURL = 'https://parseapi.back4app.com/';
+
+        // Function to check if the user is logged in
+        function checkUserSession() {
+            const currentUser = Parse.User.current();
+            if (!currentUser) {
+                window.location.href = "login.html"; // Redirect to login page
+            } else {
+                fetchPosts();
+            }
+        }
+// Request notification permission
+function requestNotificationPermission() {
+    if ("Notification" in window) {
+        Notification.requestPermission().then(permission => {
+            if (permission === "granted") {
+                console.log("Notification permission granted.");
+            } else {
+                console.log("Notification permission denied.");
+            }
+        });
+    } else {
+        console.log("This browser does not support notifications.");
+    }
+}
+// Trigger notification function from client-side when a new post is created
+function triggerNotification(postContent, username) {
+    Parse.Cloud.run('newPostNotification', { content: postContent, username: username })
+    .then(function(response) {
+        const { title, message } = response;
+        showNotification(title, message); // Call the function to show the notification
+    })
+    .catch(function(error) {
+        console.error('Error triggering notification:', error);
+    });
+}
+var title ="ScutoidChat has notification acces"
+// Function to display a notification
+function showNotification(title, message) {
+    if (Notification.permission === "granted") {
+        new Notification(title, {
+            body: message,
+            icon: 'notification_icon.png', // Optional: Path to your icon
+        });button
+    } else {
+        console.log("did not allow any notifications");
+    }
+}
+
+// Example usage when a new post is created
+function createPost() {
+    const content = document.getElementById('postContent').value;
+    const currentUser = Parse.User.current();
+
+    if (!currentUser) {
+        alert("You need to be logged in to post!");
+        return;
+    }
+
+    const Post = Parse.Object.extend('Post');
+    const post = new Post();
+    post.set('user', currentUser);
+    post.set('content', content);
+
+    post.save().then(() => {
+        alert("Post created successfully!");
+
+        // Trigger notification after post creation
+        triggerNotification(content, currentUser.get('username'));
+
+        fetchPosts(); // Refresh the posts list
+    }).catch(error => {
+        console.error("Error creating post:", errwhenor);
+        alert("Error creating post: " + error.message);
+    });
+}
+
+// Call this function when the page loads or when a user signs in
+document.addEventListener('DOMContentLoaded', requestNotificationPermission);
+
+        // Fetch and display posts
+        async function fetchPosts() {
+            const Post = Parse.Object.extend('Post');
+            const query = new Parse.Query(Post);
+            query.include('user'); // Include user info for each post
+
+            try {
+                const results = await query.find();
+                const postsList = document.getElementById('postsList');
+                postsList.innerHTML = ''; // Clear previous posts
+
+                // Reverse the order to display the latest posts first
+                results.reverse().forEach(post => {
+                    const user = post.get('user');
+                    const content = post.get('content') || 'Missing Content'; // Default to 'No content' if content is missing
+                    const username = user ? user.get('username') : 'User'; // Default to 'Unknown user' if no user
+
+                    const listItem = document.createElement('div');
+                    listItem.classList.add('post-card');  // Add card class
+
+                    // Build the post card HTML
+                    listItem.innerHTML = `
+                        <div class="post-header">
+                            <span>${username}</span>
+                            <span>${new Date(post.get('createdAt')).toLocaleString()}</span>
+                        </div>
+                        <div class="post-content">
+                            ${content}
+                        </div>
+                        <div class="post-buttons">
+                            <button onclick="commentPost('${post.id}')">Comment</button>
+                        </div>
+                    `;
+
+                    postsList.appendChild(listItem);
+                });
+            } catch (error) {
+                console.error("Error fetching posts:", error);
+                alert("Error fetching posts: " + error.message);
+            }
+        }
+
+        // Create Post function
+        async function createPost() {
+            const content = document.getElementById('postContent').value;
+            const imageFile = document.getElementById('postImage').files[0];
+            const currentUser = Parse.User.current();
+            
+            if (!currentUser) {
+                alert("Log in to post");
+                return;
+            }
+
+            const Post = Parse.Object.extend('Post');
+            const post = new Post();
+            post.set('user', currentUser);
+            post.set('content', content);
+
+            if (imageFile) {
+                const parseFile = new Parse.File(imageFile.name, imageFile);
+                try {
+                    await parseFile.save();
+                    post.set('image', parseFile);
+                } catch (error) {
+                    console.error("Error:", error);
+                    alert("Error: " + error.message);
+                    return;
+                }
+            }
+
+            try {
+                await post.save();
+                alert("Post created successfully!");
+                fetchPosts();  // Refresh the list of posts after creating a new post
+            } catch (error) {
+                console.error("Error creating post:", error);
+                alert("Error creating post: " + error.message);
+            }
+        }
+
+        // Comment Post function (placeholder for now)
+        function commentPost(postId) {
+            alert(`Comment Sorry, you can't comment yet! While you wait you can look at this post id :D :${postId}`);
+            // You can add a comment section and logic here later
+        }
+
+        // Call checkUserSession when the page loads
+        document.addEventListener('DOMContentLoaded', checkUserSession);
+    </script>
+</head>
+<body>
+    <!-- Post Form (Only visible if user is logged in) -->
+    <div id="postForm">
+        <h2>Create a Post</h2>
+        <input type="text" id="postContent" placeholder="What's on your mind?">
+        <input type="file" id="postImage">
+        <button id="createPost" onclick="createPost()">Post</button>
+    </div>
+
+    <!-- List of Post-->
+    <h2>Posts</h2>
+    <div id="postsList"></div>
+
+</body>
+</html>

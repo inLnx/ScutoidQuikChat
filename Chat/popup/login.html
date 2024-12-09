@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+   
+    <script type="text/javascript" src="https://npmcdn.com/parse/dist/parse.min.js"></script>
+    <title>Login</title>
+    <script type="text/javascript">
+        // Initialize Parse
+        Parse.initialize("kpUR8HiFeTWpUy3Ye7Ugxi1a01YrBQPbapuGhlOb", "4uBUbbALeC8kmBwNYcMNREyzYutauKIxbNPNz0G3"); // Replace with your Back4App keys
+        Parse.serverURL = 'https://parseapi.back4app.com/';
+        // Function to log in a user
+        async function login() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const user = await Parse.User.logIn(username, password);
+                console.log("User logged in successfully:", user);
+                
+                // Redirect to the social media posts page
+                
+            } catch (error) {
+                console.error("Error logging in user:", error);
+            }
+        }
+    </script>
+</head>
+<body>
+    <!-- Login Form -->
+    <h2>Login</h2>
+    <input type="text" id="loginUsername" placeholder="Username" required>
+    <input type="password" id="loginPassword" placeholder="Password" required>
+    <button id="loginButton" onclick="login()">Login</button>
+    <a href="post.html"><button id="loginButton">Chat(Login First)</button></a>
+</body>
+</html>
